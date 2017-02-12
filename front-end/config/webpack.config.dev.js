@@ -51,20 +51,20 @@ module.exports = {
         // initialization, it doesn't blow up the WebpackDevServer client, and
         // changing JS code would still trigger a refresh.
     ],
-    devServer: {
-        contentBase: 'src/www',  //Relative directory for base of server
-        hot: true,        //Live-reload
-        port: 3000,        //Port Number
-        host: 'localhost',  //Change to '0.0.0.0' for external facing server
-        inline: true,
-
-        //Map API calls to local backend server
-        proxy: {
-            '/api/*': {
-                target: 'http://localhost:8080'
-            }
-        }
-    },
+    // devServer: {
+    //     contentBase: 'src/www',  //Relative directory for base of server
+    //     hot: true,        //Live-reload
+    //     port: 3000,        //Port Number
+    //     host: 'localhost',  //Change to '0.0.0.0' for external facing server
+    //     inline: true,
+    //
+    //     //Map API calls to local backend server
+    //     proxy: {
+    //         '**': {
+    //             target: 'http://localhost:8080'
+    //         }
+    //     }
+    // },
     output: {
         // Next line is not used in dev but WebpackDevServer crashes without it:
         path: paths.appBuild,

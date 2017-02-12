@@ -255,6 +255,11 @@ function runDevServer(host, port, protocol) {
     watchOptions: {
       ignored: /node_modules/
     },
+      proxy: {
+          '**': {
+              target: 'http://localhost:8080'
+          }
+    },
     // Enable HTTPS if the HTTPS environment variable is set to 'true'
     https: protocol === "https",
     host: host

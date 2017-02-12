@@ -18,8 +18,9 @@ db.once('open', () => { console.log('Connected to mongodb server'); });
 mongoose.connect('mongodb://localhost:27017');
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('views', path.resolve(__dirname, './../front-end/public/index.html'));
+app.set('view engine', 'ejs');
+app.engine('html', require('ejs').renderFile);
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -27,9 +28,18 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, './../front-end/public')));
 
 app.use('/api', api);
+//TODO
+//url 치고 들어 갔을때 확인 !!
+app.get('*', (req, res) => {
+    console.log('************************');
+    console.log((path.resolve(__dirname, './../front-end/public')));
+    console.log(req.get)
+    console.log('************************');
+    res.sendFile(path.resolve(__dirname, './../front-end/public/index.html'));
+});
 
 /* use session */
 app.use(session({

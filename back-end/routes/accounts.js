@@ -49,6 +49,8 @@ router.post('/signup', (req, res) => {
 });
 
 router.post('/signin', (req, res) => {
+    console.log('**********************************');
+    console.log(req.body);
     if(typeof req.body.password !== "string") {
         return res.status(401).json({
             error: "LOGIN FAILED",

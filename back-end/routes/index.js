@@ -1,6 +1,6 @@
 const express = require('express');
 const account = require('./accounts');
-import memo from './memo';
+const memo = require('./memo');
 
 const router = express.Router();
 router.use('/account', account);
