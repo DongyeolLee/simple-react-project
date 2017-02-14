@@ -1,7 +1,16 @@
-var express = require('express');
-const Account = require('../models/account');
-var router = express.Router();
+import express from 'express';
+import Account from '../models/account';
 
+const router = express.Router();
+
+/*
+    ACCOUNT SIGNUP: POST /api/account/signup
+    BODY SAMPLE: { "username": "test", "password": "test" }
+    ERROR CODES:
+        1: BAD USERNAME
+        2: BAD PASSWORD
+        3: USERNAM EXISTS
+*/
 router.post('/signup', (req, res) => {
     // CHECK USERNAME FORMAT
     let usernameRegex = /^[a-z0-9]+$/;
@@ -48,9 +57,14 @@ router.post('/signup', (req, res) => {
     });
 });
 
+/*
+    ACCOUNT SIGNIN: POST /api/account/signin
+    BODY SAMPLE: { "username": "test", "password": "test" }
+    ERROR CODES:
+        1: LOGIN FAILED
+*/
 router.post('/signin', (req, res) => {
-    console.log('**********************************');
-    console.log(req.body);
+
     if(typeof req.body.password !== "string") {
         return res.status(401).json({
             error: "LOGIN FAILED",
@@ -92,6 +106,9 @@ router.post('/signin', (req, res) => {
     });
 });
 
+/*
+    GET CURRENT USER INFO GET /api/account/getInfo
+*/
 router.get('/getinfo', (req, res) => {
     if(typeof req.session.loginInfo === "undefined") {
         return res.status(401).json({
@@ -102,9 +119,33 @@ router.get('/getinfo', (req, res) => {
     res.json({ info: req.session.loginInfo });
 });
 
+/*
+    LOGOUT: POST /api/account/logout
+*/
 router.post('/logout', (req, res) => {
     req.session.destroy(err => { if(err) throw err; });
-    return res.json({ success: true });
+    return res.json({ sucess: true });
 });
 
-module.exports=router;
+
+/*
+    SEARCH USER: GET /api/account/search/:username
+*/
+router.get('/search/:username', (req, res) => {
+    // SEARCH USERNAMES THAT STARTS WITH GIVEN KEYWORD USING REGEX
+    var re = new RegExp('^' + req.params.username);
+    Account.find({username: {$regex: re}}, {_id: false, username: true})
+    .limit(5)
+    .sort({username: 1})
+    .exec((err, accounts) => {
+        if(err) throw err;
+        res.json(accounts);
+    });
+});
+
+// EMPTY SEARCH REQUEST: GET /api/account/search
+router.get('/search', (req, res) => {
+    res.json([]);
+});
+
+export default router;

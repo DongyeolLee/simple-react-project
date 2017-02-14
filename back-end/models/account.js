@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const Schema = mongoose.Schema;
 
@@ -19,4 +19,4 @@ Account.methods.validateHash = function(password) {
     return bcrypt.compareSync(password, this.password);
 };
 
-module.exports= mongoose.model('account', Account);
+export default mongoose.model('account', Account);
