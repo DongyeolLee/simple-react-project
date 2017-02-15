@@ -26,7 +26,7 @@ export function memoPostRequest(contents) {
         .then((response) => {
             dispatch(memoPostSuccess());
         }).catch((error) => {
-            dispatch(memoPostError(error.response.data.code));
+            dispatch(memoPostFailure(error.response.data.code));
         });
     };
 }
@@ -135,7 +135,7 @@ export function memoEditSuccess(index, memo) {
 
 export function memoEditFailure(error) {
     return {
-        type: MEMO_EDIT_FAILIURE,
+        type: MEMO_EDIT_FAILURE,
         error
     };
 }

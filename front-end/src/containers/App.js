@@ -1,8 +1,8 @@
 import React from 'react';
 import { Header } from '../components';
 import { connect } from 'react-redux';
-import { getStatusRequest } from 'actions/authentication';
-import { logoutRequest } from 'actions/authentication';
+import { getStatusRequest } from '../actions/authentication';
+import { logoutRequest } from '../actions/authentication';
 const $ = window.$;
 const Materialize = window.Materialize;
 
