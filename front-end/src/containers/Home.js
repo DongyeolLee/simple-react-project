@@ -1,15 +1,130 @@
 import React from 'react';
-import { Write } from '../components';
+import { Write, MemoList } from '../components';
 import { connect } from 'react-redux';
-import { memoPostRequest } from '../actions/memo';
+import { memoPostRequest, memoListRequest } from '../actions/memo';
 const Materialize = window.Materialize;
-const $ = window.$
+const $ = window.$;
 
 class Home extends React.Component {
 
     constructor(props) {
         super(props);
         this.handlePost = this.handlePost.bind(this);
+        this.loadNewMemo = this.loadNewMemo.bind(this);
+        this.loadOldMemo = this.loadOldMemo.bind(this);
+
+        this.state = {
+            loadingState: false
+        };
+
+    }
+    componentDidMount() {
+
+        $(window).scroll(() => {
+            // WHEN HEIGHT UNDER SCROLLBOTTOM IS LESS THEN 250
+            if ($(document).height() - $(window).height() - $(window).scrollTop() < 250) {
+                if(!this.state.loadingState){
+                    this.loadOldMemo();
+                    this.setState({
+                        loadingState: true
+                    });
+                }
+            } else {
+                if(this.state.loadingState){
+                    this.setState({
+                        loadingState: false
+                    });
+                }
+            }
+        });
+
+        this.props.memoListRequest(true).then(
+            () => {
+                console.log(this.props.memoData);
+            }
+        );
+
+        const loadUntilScrollable = () => {
+            // IF THE SCROLLBAR DOES NOT EXIST,
+            if($("body").height() < $(window).height()) {
+                this.loadOldMemo().then(
+                    () => {
+                        // DO THIS RECURSIVELY UNLESS IT'S LAST PAGE
+                        if(!this.props.isLast) {
+                            loadUntilScrollable();
+                        }
+                    }
+                );
+            }
+        };
+
+        this.props.memoListRequest(true).then(
+            () => {
+                // BEGIN NEW MEMO LOADING LOOP
+                loadUntilScrollable();
+                loadMemoLoop();
+            }
+        );
+
+        const loadMemoLoop = () => {
+            this.loadNewMemo().then(
+                () => {
+                    this.memoLoaderTimeoutId = setTimeout(loadMemoLoop, 5000);
+                }
+            );
+        };
+
+
+        this.props.memoListRequest(true).then(
+            () => {
+                // BEGIN NEW MEMO LOADING LOOP
+                loadMemoLoop();
+            }
+        );
+    }
+
+    componentWillUnmount() {
+        // STOPS THE loadMemoLoop
+        clearTimeout(this.memoLoaderTimeoutId);
+
+        // REMOVE WINDOWS SCROLL LISTENER
+        $(window).unbind();
+    }
+
+    loadOldMemo() {
+        // CANCEL IF USER IS READING THE LAST PAGE
+        if(this.props.isLast) {
+            return new Promise(
+                (resolve, reject)=> {
+                    resolve();
+                }
+            );
+        }
+
+        // GET ID OF THE MEMO AT THE BOTTOM
+        let lastId = this.props.memoData[this.props.memoData.length - 1]._id;
+
+        // START REQUEST
+        return this.props.memoListRequest(false, 'old', lastId).then(() => {
+            // IF IT IS LAST PAGE, NOTIFY
+            if(this.props.isLast) {
+                Materialize.toast('You are reading the last page', 2000);
+            }
+        });
+    }
+
+    loadNewMemo() {
+        // CANCEL IF THERE IS A PENDING REQUEST
+        if(this.props.listStatus === 'WAITING')
+            return new Promise((resolve, reject)=> {
+                resolve();
+            });
+
+        // IF PAGE IS EMPTY, DO THE INITIAL LOADING
+        if(this.props.memoData.length === 0 )
+            return this.props.memoListRequest(true);
+
+        return this.props.memoListRequest(false, 'new', this.props.memoData[0]._id);
     }
 
     /* POST MEMO */
@@ -19,7 +134,11 @@ class Home extends React.Component {
                 if(this.props.postStatus.status === "SUCCESS") {
                     // TRIGGER LOAD NEW MEMO
                     // TO BE IMPLEMENTED
-                    Materialize.toast('Success!', 2000);
+                    this.loadNewMemo().then(
+                        () => {
+                            Materialize.toast('Success!', 2000);
+                        }
+                    );
                 } else {
                     /*
                      ERROR CODES
@@ -57,6 +176,7 @@ class Home extends React.Component {
         return (
             <div className="wrapper">
                 { this.props.isLoggedIn ? write : undefined }
+                <MemoList data={this.props.memoData} currentUser={this.props.currentUser}/>
             </div>
         );
     }
@@ -65,7 +185,11 @@ class Home extends React.Component {
 const mapStateToProps = (state) => {
     return {
         isLoggedIn: state.authentication.status.isLoggedIn,
-        postStatus: state.memo.post
+        postStatus: state.memo.post,
+        currentUser: state.authentication.status.currentUser,
+        memoData: state.memo.list.data,
+        listStatus: state.memo.list.status,
+        isLast: state.memo.list.isLast
     };
 };
 
@@ -73,6 +197,9 @@ const mapDispatchToProps = (dispatch) => {
     return {
         memoPostRequest: (contents) => {
             return dispatch(memoPostRequest(contents));
+        },
+        memoListRequest: (isInitial, listType, id, username) => {
+            return dispatch(memoListRequest(isInitial, listType, id, username));
         }
     };
 };

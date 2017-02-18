@@ -22,12 +22,12 @@ export function memoPostRequest(contents) {
     return (dispatch) => {
         dispatch(memoPost());
 
-        return axios.post('/api/memo/', { contents })
-        .then((response) => {
-            dispatch(memoPostSuccess());
-        }).catch((error) => {
-            dispatch(memoPostFailure(error.response.data.code));
-        });
+        return axios.post('/api/memo/', {contents})
+            .then((response) => {
+                dispatch(memoPostSuccess());
+            }).catch((error) => {
+                dispatch(memoPostFailure(error.response.data.code));
+            });
     };
 }
 
@@ -53,34 +53,34 @@ export function memoPostFailure(error) {
 /* MEMO LIST */
 
 /*
-    Parameter:
-        - isInitial: whether it is for initial loading
-        - listType:  OPTIONAL; loading 'old' memo or 'new' memo
-        - id:        OPTIONAL; memo id (one at the bottom or one at the top)
-        - username:  OPTIONAL; find memos of following user
-*/
+ Parameter:
+ - isInitial: whether it is for initial loading
+ - listType:  OPTIONAL; loading 'old' memo or 'new' memo
+ - id:        OPTIONAL; memo id (one at the bottom or one at the top)
+ - username:  OPTIONAL; find memos of following user
+ */
 export function memoListRequest(isInitial, listType, id, username) {
     return (dispatch) => {
-        // to be implemented
+        // inform memo list API is starting
         dispatch(memoList());
 
         let url = '/api/memo';
 
-        if(typeof username === "undefined") {
+        if (typeof username === "undefined") {
             // username not given, load public memo
             url = isInitial ? url : `${url}/${listType}/${id}`;
-            // or url + '/' + listType + Z'/' +  id
+            // or url + '/' + listType + '/' +  id
         } else {
-            // load memos of a user
-            url = isInitial ? `${url}/${username}` : `${url}/${username}/${listType}/${id}`;
+            // load memos of specific user
+            /* to be implemented */
         }
 
         return axios.get(url)
-        .then((response) => {
-            dispatch(memoListSuccess(response.data, isInitial, listType));
-        }).catch((error) => {
-            dispatch(memoListFailure());
-        });
+            .then((response) => {
+                dispatch(memoListSuccess(response.data, isInitial, listType));
+            }).catch((error) => {
+                dispatch(memoListFailure());
+            });
 
     };
 }
@@ -110,12 +110,12 @@ export function memoEditRequest(id, index, contents) {
     return (dispatch) => {
         dispatch(memoEdit());
 
-        return axios.put('/api/memo/' + id, { contents })
-        .then((response) => {
-            dispatch(memoEditSuccess(index, response.data.memo));
-        }).catch((error) => {
-            dispatch(memoEditFailure(error.response.data.code));
-        });
+        return axios.put('/api/memo/' + id, {contents})
+            .then((response) => {
+                dispatch(memoEditSuccess(index, response.data.memo));
+            }).catch((error) => {
+                dispatch(memoEditFailure(error.response.data.code));
+            });
     };
 }
 
@@ -147,12 +147,12 @@ export function memoRemoveRequest(id, index) {
         dispatch(memoRemove());
 
         return axios.delete('/api/memo/' + id)
-        .then((response)=> {
-            dispatch(memoRemoveSuccess(index));
-        }).catch((error) => {
-            console.log(error);
-            dispatch(memoRemoveFailure(error.response.data.code));
-        });
+            .then((response) => {
+                dispatch(memoRemoveSuccess(index));
+            }).catch((error) => {
+                console.log(error);
+                dispatch(memoRemoveFailure(error.response.data.code));
+            });
     };
 }
 
@@ -182,12 +182,12 @@ export function memoStarRequest(id, index) {
         dispatch(memoStar());
 
         return axios.post('/api/memo/star/' + id)
-        .then((response) => {
-            dispatch(memoStarSuccess(index, response.data.memo));
-        }).catch((error) => {
-            console.log(error);
-            dispatch(memoStarFailure());
-        });
+            .then((response) => {
+                dispatch(memoStarSuccess(index, response.data.memo));
+            }).catch((error) => {
+                console.log(error);
+                dispatch(memoStarFailure());
+            });
     };
 }
 
