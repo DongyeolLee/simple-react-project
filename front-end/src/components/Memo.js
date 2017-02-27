@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router';
 import TimeAgo from 'react-timeago';
 
 const $ = window.$;
@@ -128,7 +129,7 @@ class Memo extends React.Component {
         const memoView = (
             <div className="card">
                 <div className="info">
-                    <a className="username">{this.props.data.writer}</a> wrote a log · <TimeAgo date={this.props.data.date.created}/>
+                    <Link to={`/wall/${this.props.data.writer}`} className="username">{this.props.data.writer}</Link> wrote a log · <TimeAgo date={this.props.data.date.created}/>
                     { this.props.data.is_edited ? editedInfo : undefined }
                     { this.props.ownership ? dropDownMenu : undefined }
                 </div>

@@ -17,7 +17,8 @@ class Home extends React.Component {
         this.handleStar = this.handleStar.bind(this);
 
         this.state = {
-            loadingState: false
+            loadingState: false,
+            initiallyLoaded: false
         };
 
     }
@@ -132,31 +133,21 @@ class Home extends React.Component {
         );
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        if(this.props.username !== prevProps.username) {
+            this.componentWillUnmount();
+            this.componentDidMount();
+        }
+    }
+
     componentDidMount() {
-
-        $(window).scroll(() => {
-            // WHEN HEIGHT UNDER SCROLLBOTTOM IS LESS THEN 250
-            if ($(document).height() - $(window).height() - $(window).scrollTop() < 250) {
-                if(!this.state.loadingState){
-                    this.loadOldMemo();
-                    this.setState({
-                        loadingState: true
-                    });
+        const loadMemoLoop = () => {
+            this.loadNewMemo().then(
+                () => {
+                    this.memoLoaderTimeoutId = setTimeout(loadMemoLoop, 5000);
                 }
-            } else {
-                if(this.state.loadingState){
-                    this.setState({
-                        loadingState: false
-                    });
-                }
-            }
-        });
-
-        this.props.memoListRequest(true).then(
-            () => {
-                console.log(this.props.memoData);
-            }
-        );
+            );
+        };
 
         const loadUntilScrollable = () => {
             // IF THE SCROLLBAR DOES NOT EXIST,
@@ -172,29 +163,34 @@ class Home extends React.Component {
             }
         };
 
-        this.props.memoListRequest(true).then(
+
+        this.props.memoListRequest(true, undefined, undefined, this.props.username).then(
             () => {
-                // BEGIN NEW MEMO LOADING LOOP
-                loadUntilScrollable();
-                loadMemoLoop();
+                setTimeout(loadUntilScrollable, 1000);
+                // loadMemoLoop();
+                this.setState({
+                    initiallyLoaded: true
+                });
             }
         );
 
-        const loadMemoLoop = () => {
-            this.loadNewMemo().then(
-                () => {
-                    this.memoLoaderTimeoutId = setTimeout(loadMemoLoop, 5000);
+        $(window).scroll(() => {
+            // WHEN HEIGHT UNDER SCROLLBOTTOM IS LESS THEN 250
+            if ($(document).height() - $(window).height() - $(window).scrollTop() < 250) {
+                if(!this.state.loadingState) {
+                    this.loadOldMemo();
+                    this.setState({
+                        loadingState: true
+                    });
                 }
-            );
-        };
-
-
-        this.props.memoListRequest(true).then(
-            () => {
-                // BEGIN NEW MEMO LOADING LOOP
-                loadMemoLoop();
+            } else {
+                if(this.state.loadingState) {
+                    this.setState({
+                        loadingState: false
+                    });
+                }
             }
-        );
+        });
     }
 
     componentWillUnmount() {
@@ -203,6 +199,10 @@ class Home extends React.Component {
 
         // REMOVE WINDOWS SCROLL LISTENER
         $(window).unbind();
+
+        this.setState({
+            initiallyLoaded: false
+        });
     }
 
     loadOldMemo() {
@@ -219,7 +219,7 @@ class Home extends React.Component {
         let lastId = this.props.memoData[this.props.memoData.length - 1]._id;
 
         // START REQUEST
-        return this.props.memoListRequest(false, 'old', lastId).then(() => {
+        return this.props.memoListRequest(false, 'old', lastId, this.props.username).then(() => {
             // IF IT IS LAST PAGE, NOTIFY
             if(this.props.isLast) {
                 Materialize.toast('You are reading the last page', 2000);
@@ -229,16 +229,18 @@ class Home extends React.Component {
 
     loadNewMemo() {
         // CANCEL IF THERE IS A PENDING REQUEST
-        if(this.props.listStatus === 'WAITING')
-            return new Promise((resolve, reject)=> {
+        if(this.props.listStatus === 'WAITING') {
+            return new Promise((resolve, reject) => {
                 resolve();
             });
+        }
 
         // IF PAGE IS EMPTY, DO THE INITIAL LOADING
-        if(this.props.memoData.length === 0 )
+        if(this.props.memoData.length === 0 ) {
             return this.props.memoListRequest(true);
+        }
 
-        return this.props.memoListRequest(false, 'new', this.props.memoData[0]._id);
+        return this.props.memoListRequest(false, 'new', this.props.memoData[0]._id, this.props.username);
     }
 
     /* POST MEMO */
@@ -287,9 +289,31 @@ class Home extends React.Component {
             <Write onPost={this.handlePost}/>
         );
 
+        const emptyView = (
+            <div className="container">
+                <div className="empty-page">
+                    <b>{this.props.username}</b> isn't registered or hasn't written any memo
+                </div>
+            </div>
+        );
+
+        const wallHeader = (
+            <div>
+                <div className="container wall-info">
+                    <div className="card wall-info blue lighten-2 white-text">
+                        <div className="card-content">
+                            {this.props.username}
+                        </div>
+                    </div>
+                </div>
+                { this.props.memoData.length === 0 && this.state.initiallyLoaded ? emptyView : undefined }
+            </div>
+        );
+
         return (
             <div className="wrapper">
-                { this.props.isLoggedIn ? write : undefined }
+                { typeof this.props.username !== "undefined" ? wallHeader : undefined }
+                { this.props.isLoggedIn && typeof this.props.username === "undefined" ? write : undefined }
                 <MemoList data={this.props.memoData}
                           currentUser={this.props.currentUser}
                           onEdit={this.handleEdit}
@@ -333,6 +357,14 @@ const mapDispatchToProps = (dispatch) => {
             return dispatch(memoStarRequest(id, index));
         }
     };
+};
+
+Home.PropTypes = {
+    username: React.PropTypes.string
+};
+
+Home.defaultProps = {
+    username: undefined
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Home);
